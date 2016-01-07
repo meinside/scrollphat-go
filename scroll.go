@@ -5,6 +5,7 @@ package scroll
 import (
 	"log"
 	"sync"
+	"time"
 
 	i2c "github.com/meinside/scrollphat-go/i2c"
 )
@@ -21,6 +22,10 @@ const (
 	// 11 x 5 LEDs
 	NumRows = 5
 	NumCols = 11
+)
+
+const (
+	minimumDelay = 10 // 10 ms
 )
 
 type ScrollPHat struct {
@@ -72,54 +77,78 @@ func (s ScrollPHat) SetBrightness(brightness byte) {
 // Draw given pixel bytes
 func (s ScrollPHat) draw(bytes []byte) {
 	if bytes == nil {
+		log.Printf("[draw] given bytes is nil")
 		return
 	}
 
-	s.Lock()
-	defer s.Unlock()
+	bytes = append(bytes, 0xFF) // need trailing 0xFF for drawing
 
-	pixelBytes := append(bytes, 0xFF) // need trailing 0xFF for drawing
-
-	if _, err := s.write(CmdPaintPixel, pixelBytes); err != nil {
+	if _, err := s.write(CmdPaintPixel, bytes); err != nil {
 		log.Printf("[draw] error writing to i2c: %s\n", err)
 	}
 }
 
 // Alter pixels in the memory and draw them
 func (s ScrollPHat) DrawBytes(bytes []byte) {
-	copy(s.pixels, bytes)
+	s.Lock()
+	defer s.Unlock()
 
+	copy(s.pixels, bytes)
 	s.draw(s.pixels)
+}
+
+func (s ScrollPHat) Scroll(str string, delayMs uint) {
+	if delayMs < minimumDelay {
+		delayMs = minimumDelay
+	}
+
+	bytes := BytesForString(str)
+
+	s.Lock()
+	defer s.Unlock()
+
+	for i, _ := range bytes {
+		copy(s.pixels, bytes[i:i+NumCols])
+		s.draw(s.pixels)
+
+		time.Sleep(time.Duration(delayMs) * time.Millisecond)
+	}
 }
 
 // Alter given pixel in the memory and draw them
 func (s ScrollPHat) DrawPixel(col, row uint, isOn bool) {
+	s.Lock()
+	defer s.Unlock()
+
 	if isOn {
 		s.pixels[col] |= (1 << row)
 	} else {
 		s.pixels[col] ^= (1 << row)
 	}
-
 	s.draw(s.pixels)
 }
 
 // Toggle given pixel in the memory and draw them
 func (s ScrollPHat) TogglePixel(col, row uint) {
+	s.Lock()
+	defer s.Unlock()
+
 	if s.pixels[col]&(1<<row) > 0 {
 		s.pixels[col] ^= (1 << row)
 	} else {
 		s.pixels[col] |= (1 << row)
 	}
-
 	s.draw(s.pixels)
 }
 
 // Clear pixels for both memory and LED
 func (s ScrollPHat) Clear() {
+	s.Lock()
+	defer s.Unlock()
+
 	for i := 0; i < NumCols; i++ {
 		s.pixels[i] = 0x00
 	}
-
 	s.draw(s.pixels)
 }
 
@@ -130,15 +159,20 @@ func (s ScrollPHat) Fill() {
 		fill |= (1 << uint(i))
 	}
 
+	s.Lock()
+	defer s.Unlock()
+
 	for i := 0; i < NumCols; i++ {
 		s.pixels[i] = fill
 	}
-
 	s.draw(s.pixels)
 }
 
 // Invert pixels for both memory and LED
 func (s ScrollPHat) Invert() {
+	s.Lock()
+	defer s.Unlock()
+
 	for i := 0; i < NumCols; i++ {
 		for j := 0; j < NumRows; j++ {
 			if s.pixels[i]&(1<<uint(j)) > 0 {
@@ -148,11 +182,13 @@ func (s ScrollPHat) Invert() {
 			}
 		}
 	}
-
 	s.draw(s.pixels)
 }
 
 // Close
 func (s ScrollPHat) Close() error {
+	s.Lock()
+	defer s.Unlock()
+
 	return s.i2c.Close()
 }

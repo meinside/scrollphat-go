@@ -1,4 +1,4 @@
-package util
+package scroll
 
 // extracted from: https://github.com/pimoroni/scroll-phat/blob/master/library/font.png
 var fontBytes [][]byte = [][]byte{
