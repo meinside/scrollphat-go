@@ -4,6 +4,7 @@ package scroll
 
 import (
 	"log"
+	"math"
 	"sync"
 	"time"
 
@@ -108,8 +109,18 @@ func (s ScrollPHat) Scroll(str string, delayMs uint) {
 	s.Lock()
 	defer s.Unlock()
 
-	for i, _ := range bytes {
-		copy(s.pixels, bytes[i:i+NumCols])
+	var limit int
+	for offset, _ := range bytes {
+		// copy bytes
+		limit = int(math.Min(float64(len(bytes)-offset), float64(NumCols)))
+		for i := 0; i < NumCols; i++ {
+			if i < limit {
+				s.pixels[i] = bytes[offset+i]
+			} else {
+				s.pixels[i] = 0x00
+			}
+		}
+
 		s.draw(s.pixels)
 
 		time.Sleep(time.Duration(delayMs) * time.Millisecond)
@@ -147,6 +158,7 @@ func (s ScrollPHat) Clear() {
 	s.Lock()
 	defer s.Unlock()
 
+	// clear bytes
 	for i := 0; i < NumCols; i++ {
 		s.pixels[i] = 0x00
 	}
