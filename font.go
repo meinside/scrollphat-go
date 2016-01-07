@@ -1,5 +1,7 @@
 package scroll
 
+var TrimRedundantSpaces = true // trim redundant spaces in each character or not
+
 // extracted from: https://github.com/pimoroni/scroll-phat/blob/master/library/font.png
 var fontBytes [][]byte = [][]byte{
 	{0x00, 0x00, 0x00, 0x00, 0x00}, // starts from 0x20
@@ -100,6 +102,33 @@ var fontBytes [][]byte = [][]byte{
 	{0x00, 0x00, 0x00, 0x00, 0x00},
 }
 
+// trim given bytes
+func trim(bytes []byte) []byte {
+	var checker byte = 0x00
+	for _, b := range bytes {
+		checker |= b
+	}
+	if checker == 0x00 { // all spaces
+		return []byte{0x00, 0x00}
+	}
+
+	var left, right int
+	// from left,
+	for left = 0; left < len(bytes); left++ {
+		if bytes[left] != 0x00 {
+			break
+		}
+	}
+	// from right
+	for right = len(bytes) - 1; right >= 0; right-- {
+		if bytes[right] != 0x00 {
+			break
+		}
+	}
+
+	return bytes[left : right+1]
+}
+
 // Get bytes array for given character
 func BytesForCharacter(char rune) []byte {
 	index := int(char) - 0x20 // font starts at 0x20
@@ -109,7 +138,12 @@ func BytesForCharacter(char rune) []byte {
 		index = 0 // default to '0x20'
 	}
 
-	return fontBytes[index]
+	bytes := fontBytes[index] // look up
+	if TrimRedundantSpaces {
+		bytes = trim(bytes)
+	}
+
+	return bytes
 }
 
 // Get bytes array for given string
