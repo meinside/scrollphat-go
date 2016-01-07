@@ -10,15 +10,15 @@ import (
 )
 
 const (
-	I2cAddr = 0x60
+	i2cAddr  = 0x60
+	mode5x11 = 0x03
 
-	Mode5x11 = 0x03
-
+	// commands
 	CmdSetMode       = 0x00
 	CmdSetBrightness = 0x19
 	CmdPaintPixel    = 0x01
 
-	// 11 x 5
+	// 11 x 5 LEDs
 	NumRows = 5
 	NumCols = 11
 )
@@ -27,17 +27,19 @@ type ScrollPHat struct {
 	sync.Mutex
 	i2c *i2c.I2C
 
+	// internal pixels array
 	pixels []byte
 }
 
+// Get a new ScrollPHat
 func New() *ScrollPHat {
-	if i, err := i2c.New(I2cAddr); err == nil {
+	if i, err := i2c.New(i2cAddr); err == nil {
 		nu := ScrollPHat{
 			i2c:    i,
 			pixels: make([]byte, NumCols),
 		}
 
-		if _, err := nu.write(CmdSetMode, []byte{Mode5x11}); err != nil {
+		if _, err := nu.write(CmdSetMode, []byte{mode5x11}); err != nil {
 			log.Printf("*** failed to set mode: %s\n", err)
 		}
 
@@ -49,6 +51,7 @@ func New() *ScrollPHat {
 	return nil
 }
 
+// Write given command and data to i2c
 func (s ScrollPHat) write(cmd byte, data []byte) (n int, err error) {
 	var bytes []byte = []byte{cmd}
 	bytes = append(bytes, data...)
@@ -68,6 +71,10 @@ func (s ScrollPHat) SetBrightness(brightness byte) {
 
 // Draw given pixel bytes
 func (s ScrollPHat) draw(bytes []byte) {
+	if bytes == nil {
+		return
+	}
+
 	s.Lock()
 	defer s.Unlock()
 
@@ -148,21 +155,4 @@ func (s ScrollPHat) Invert() {
 // Close
 func (s ScrollPHat) Close() error {
 	return s.i2c.Close()
-}
-
-func boolsToBytes(pixels [NumCols][NumRows]bool) []byte {
-	var b byte
-	bytes := []byte{}
-
-	for _, col := range pixels {
-		b = 0
-		for n, pixelOn := range col {
-			if pixelOn {
-				b |= (1 << uint(n))
-			}
-		}
-		bytes = append(bytes, b)
-	}
-
-	return bytes
 }
