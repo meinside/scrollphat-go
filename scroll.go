@@ -97,6 +97,7 @@ func (s ScrollPHat) DrawBytes(bytes []byte) {
 	s.draw(s.pixels)
 }
 
+// Scroll given string with delay, altering pixels in the memory for each frame
 func (s ScrollPHat) Scroll(str string, delayMs uint) {
 	if delayMs < minimumDelay {
 		delayMs = minimumDelay
