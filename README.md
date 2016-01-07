@@ -60,7 +60,7 @@ func main() {
 		phat.Scroll(" 0123456789 ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz `~!@#$%^&*()-=_+[]{};:\"'<>,.?/\\|", 50)
 		time.Sleep(1 * time.Second)
 
-		// draw points
+		// draw points (heart-shaped...)
 		phat.DrawBytes(scroll.ArraysToBytes([][]uint8{
 			{0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0},
 			{0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
@@ -90,6 +90,10 @@ Compile it and run like this:
 $ go build sample.go
 $ ./sample
 ```
+
+Then you'll see:
+
+![scroll_phat_sample.gif](https://cloud.githubusercontent.com/assets/185988/12164502/5031a09c-b559-11e5-9c34-c66c502183f6.gif)
 
 ## License
 
