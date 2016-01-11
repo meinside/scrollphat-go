@@ -105,6 +105,8 @@ func (s ScrollPHat) Scroll(str string, delayMs uint) {
 	}
 
 	bytes := BytesForString(str)
+	padding := make([]byte, NumCols-1) // append padding for scrolling from right edge
+	bytes = append(padding, bytes...)
 
 	s.Lock()
 	defer s.Unlock()
