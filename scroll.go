@@ -37,6 +37,9 @@ type ScrollPHat struct {
 	pixels []byte
 }
 
+var IsFlippedVertically = false   // leds are flipped vertically or not
+var IsFlippedHorizontally = false // leds are flipped horizontally or not
+
 // Get a new ScrollPHat
 func New() *ScrollPHat {
 	if i, err := i2c.New(i2cAddr); err == nil {
@@ -80,6 +83,24 @@ func (s ScrollPHat) draw(bytes []byte) {
 	if bytes == nil {
 		log.Printf("[draw] given bytes is nil")
 		return
+	}
+
+	// reverse bit orders
+	if IsFlippedVertically {
+		var b byte
+		for i := 0; i < len(bytes); i++ {
+			b = bytes[i]
+			bytes[i] = ((b & 0x01) << 4) | ((b & 0x02) << 2) | (b & 0x04) | ((b & 0x08) >> 2) | ((b & 0x10) >> 4)
+		}
+	}
+
+	// reverse byte orders
+	if IsFlippedHorizontally {
+		reversed := []byte{}
+		for i := len(bytes) - 1; i >= 0; i-- {
+			reversed = append(reversed, bytes[i])
+		}
+		bytes = reversed
 	}
 
 	bytes = append(bytes, 0xFF) // need trailing 0xFF for drawing
