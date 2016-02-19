@@ -1,75 +1,84 @@
 package scroll
 
 import (
-	"testing"
-
 	"bytes"
+	"testing"
 )
 
 func TestTrim(t *testing.T) {
-	var trimmed, expected []byte
+	var b, trimmed, expected []byte
 
 	// all blank => two spaces
-	trimmed = trim([]byte{0, 0, 0, 0, 0, 0})
+	b = []byte{0, 0, 0, 0, 0, 0}
+	trimmed = trim(b)
 	expected = []byte{0, 0}
 	if !bytes.Equal(trimmed, expected) {
-		t.Error("All-zero bytes should be converted to two zeros.")
+		t.Errorf("trim(%+v) returned: %+v, expected: %+v.", b, trimmed, expected)
 	}
 
 	// trim spaces on left side
-	trimmed = trim([]byte{0, 0, 1, 1, 0, 0, 1, 1})
+	b = []byte{0, 0, 1, 1, 0, 0, 1, 1}
+	trimmed = trim(b)
 	expected = []byte{1, 1, 0, 0, 1, 1}
 	if !bytes.Equal(trimmed, expected) {
-		t.Error("Trimming on left side failed.")
+		t.Errorf("trim(%+v) returned: %+v, expected: %+v.", b, trimmed, expected)
 	}
 
 	// trim spaces on right side
-	trimmed = trim([]byte{1, 1, 0, 0, 1, 1, 0, 0})
+	b = []byte{1, 1, 0, 0, 1, 1, 0, 0}
+	trimmed = trim(b)
 	expected = []byte{1, 1, 0, 0, 1, 1}
 	if !bytes.Equal(trimmed, expected) {
-		t.Error("Trimming on right side failed.")
+		t.Errorf("trim(%+v) returned: %+v, expected: %+v.", b, trimmed, expected)
 	}
 
 	// trim spaces on both sides
-	trimmed = trim([]byte{0, 0, 1, 1, 0, 0, 1, 1, 0, 0})
+	b = []byte{0, 0, 1, 1, 0, 0, 1, 1, 0, 0}
+	trimmed = trim(b)
 	expected = []byte{1, 1, 0, 0, 1, 1}
 	if !bytes.Equal(trimmed, expected) {
-		t.Error("Trimming on both sides failed.")
+		t.Errorf("trim(%+v) returned: %+v, expected: %+v.", b, trimmed, expected)
 	}
 }
 
 func TestBytesForCharacter(t *testing.T) {
+	var c rune
 	var converted, expected []byte
 
 	// unconvertible character => spaces
-	converted = BytesForCharacter('헐')
+	c = '헐'
+	converted = BytesForCharacter(c)
 	expected = []byte{0, 0}
 	if !bytes.Equal(converted, expected) {
-		t.Error("Unconvertible character should be converted to spaces.")
+		t.Errorf("BytesForCharacter(%+v) returned: %+v, expected: %+v. (unconvertible character should be converted to spaces)", c, converted, expected)
 	}
 
 	// convertible character
-	converted = BytesForCharacter('a')
+	c = 'a'
+	converted = BytesForCharacter(c)
 	expected = []byte{8, 20, 28}
 	if !bytes.Equal(converted, expected) {
-		t.Error("Failed converting a character.")
+		t.Errorf("BytesForCharacter(%+v) returned: %+v, expected: %+v.", c, converted, expected)
 	}
 }
 
 func TestBytesForString(t *testing.T) {
+	var s string
 	var converted, expected []byte
 
 	// blank string
-	converted = BytesForString("    ")
+	s = "    "
+	converted = BytesForString(s)
 	expected = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 	if !bytes.Equal(converted, expected) {
-		t.Error("Failed converting a blank string.")
+		t.Errorf("BytesForString(%+v) returned: %+v, expected: %+v.", s, converted, expected)
 	}
 
 	// ordinary string
-	converted = BytesForString("Go go go.")
+	s = "Go go go."
+	converted = BytesForString(s)
 	expected = []byte{14, 17, 29, 0, 8, 20, 8, 0, 0, 0, 0, 2, 21, 15, 0, 8, 20, 8, 0, 0, 0, 0, 2, 21, 15, 0, 8, 20, 8, 0, 16, 0}
 	if !bytes.Equal(converted, expected) {
-		t.Error("Failed converting a string.")
+		t.Errorf("BytesForString(%+v) returned: %+v, expected: %+v.", s, converted, expected)
 	}
 }
